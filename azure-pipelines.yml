@@ -56,7 +56,9 @@ steps:
   displayName: 'Run unit tests - $(buildConfiguration)'
   inputs:
     command: 'test'
-    arguments: '--no-build --configuration $(buildConfiguration) /p:CollectCoverage=true /p:CoverletOutpuFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
+    # comando para preparar la generación del reporte de cobertura para plataformas/ambientes distintos a Windows (Linux - Mac-OS)
+    #arguments: '--no-build --configuration $(buildConfiguration) /p:CollectCoverage=true /p:CoverletOutpuFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
+    arguments: '--no-build --configuration $(buildConfiguration) --collect:"XPlat Code Coverage" /p:CoverletOutpuFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
     publishTestResults: true
     projects: '**/*.Tests.csproj'
 
@@ -65,13 +67,15 @@ steps:
   inputs:
     command: custom
     custom: tool
-    arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/Coverage/coverage.json -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInLine_AzurePipelines'
+    # comando para generar el reporte en ambientes distintos a Windows (Linux-MacOS)
+    # arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/Coverage/coverage.json -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInLine_AzurePipelines'
+    arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Code Coverage Report'
   inputs:
     codeCovergeTool: 'cobertura'
-    summaryFileLocation: '$(Build.SourcesDirectory)/TestResults/Coverage/coverage.json'
+    summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
     
 - task: DotNetCoreCLI@2
   displayName: 'Publish the project - $(buildConfiguration)'
